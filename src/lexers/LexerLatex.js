@@ -1,5 +1,5 @@
-import Lexer from './Lexer'
 import greekLetters from '../models/greek-letters'
+import Lexer from './Lexer'
 
 export default class LatexLexer extends Lexer {
   constructor(latex) {
@@ -124,7 +124,7 @@ export default class LatexLexer extends Lexer {
 
     let variable = this.variable()
 
-    if (variable.value == 'cdot') {
+    if (variable.value == 'cdot' || variable.value == 'times') {
       return { type: 'operator', value: 'multiply' }
     }
 
@@ -152,7 +152,9 @@ export default class LatexLexer extends Lexer {
       return bracket
     }
 
-    if (greekLetters.map(x => x.name).includes(variable.value.toLowerCase())) {
+    if (
+      greekLetters.map((x) => x.name).includes(variable.value.toLowerCase())
+    ) {
       return { type: 'variable', value: variable.value }
     }
 

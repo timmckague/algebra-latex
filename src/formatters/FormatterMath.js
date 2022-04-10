@@ -1,5 +1,4 @@
-import * as greekLetters from '../models/greek-letters'
-import { debug } from '../logger'
+// import * as greekLetters from '../models/greek-letters'
 
 export default class MathFormatter {
   constructor(ast) {
@@ -59,27 +58,40 @@ export default class MathFormatter {
     let lhs = this.format(root.lhs)
     let rhs = this.format(root.rhs)
 
-    const precedensOrder = [
+    const precedenceOrder = [
       ['modulus'],
       ['exponent'],
       ['multiply', 'divide'],
       ['plus', 'minus'],
     ]
 
-    const higherPrecedens = (a, b) => {
-      const depth = op => precedensOrder.findIndex(val => val.includes(op))
+    const higherPrecedence = (a, b) => {
+      const depth = (op) => precedenceOrder.findIndex((val) => val.includes(op))
 
       return depth(b) > depth(a)
     }
 
-    const shouldHaveParenthesis = child =>
-      child.type == 'operator' && higherPrecedens(root.operator, child.operator)
+    const shouldHaveParenthesis = (child) =>
+      child.type == 'operator' &&
+      higherPrecedence(root.operator, child.operator)
 
     let lhsParen = shouldHaveParenthesis(root.lhs)
+    // Special case for exponents eg. (-1)^2
+    lhsParen =
+      lhsParen ||
+      (op == '^' && root.lhs.type === 'number' && root.lhs.value < 0)
+
     let rhsParen = shouldHaveParenthesis(root.rhs)
 
     // Special case for division
     rhsParen = rhsParen || (op == '/' && root.rhs.type == 'operator')
+
+    // Special case for minus eg for handling a - (b + c) vs a - b + c
+    rhsParen = rhsParen || root.isRightDistributive
+
+    // Special case to just make uni operators more explicit with their output
+    // for example 10(-(1-x)) produces 10*-(1-x) which makes algebrite unhappy
+    rhsParen = rhsParen || root.rhs.type == 'uni-operator'
 
     if (root.operator == 'exponent') {
       if (root.rhs.type == 'number' && root.rhs.value < 0) {
@@ -102,11 +114,12 @@ export default class MathFormatter {
   }
 
   variable(root) {
-    let greekLetter = greekLetters.getSymbol(root.value)
+    // this doesn't play nice with algebrite
+    // let greekLetter = greekLetters.getSymbol(root.value)
 
-    if (greekLetter) {
-      return greekLetter
-    }
+    // if (greekLetter) {
+    //   return greekLetter
+    // }
 
     return `${root.value}`
   }
@@ -125,6 +138,9 @@ export default class MathFormatter {
 
   uni_operator(root) {
     if (root.operator == 'minus') {
+      if (root.isRightDistributive) {
+        return `-(${this.format(root.value)})`
+      }
       return `-${this.format(root.value)}`
     }
 

@@ -1,6 +1,6 @@
-import Parser from '../../src/Parser'
-import LatexLexer from '../../src/lexers/LexerLatex'
 import assert from 'assert'
+import LatexLexer from '../../src/lexers/LexerLatex'
+import Parser from '../../src/Parser'
 
 describe('latex parser', () => {
   let parser = (latex) => {
@@ -43,6 +43,52 @@ describe('latex parser', () => {
         },
       },
     })
+  })
+
+  it('should parse bracket uni minus expression', () => {
+    const latex = '- (3 + 3)'
+    const result = parser(latex)
+    const expectedResult = {
+      type: 'uni-operator',
+      operator: 'minus',
+      isRightDistributive: true,
+      value: {
+        type: 'operator',
+        operator: 'plus',
+        lhs: { type: 'number', value: 3 },
+        rhs: { type: 'number', value: 3 },
+      },
+    }
+    assert.deepStrictEqual(result, expectedResult)
+  })
+
+  it('should parse bracket minus expression', () => {
+    const latex = '1 - (3x + 3y)'
+
+    const expectedResult = {
+      type: 'operator',
+      operator: 'minus',
+      isRightDistributive: true,
+      lhs: { type: 'number', value: 1 },
+      rhs: {
+        type: 'operator',
+        operator: 'plus',
+        lhs: {
+          type: 'operator',
+          operator: 'multiply',
+          lhs: { type: 'number', value: 3 },
+          rhs: { type: 'variable', value: 'x' },
+        },
+        rhs: {
+          type: 'operator',
+          operator: 'multiply',
+          lhs: { type: 'number', value: 3 },
+          rhs: { type: 'variable', value: 'y' },
+        },
+      },
+    }
+    const result = parser(latex)
+    assert.deepStrictEqual(result, expectedResult)
   })
 
   it('should parse basic latex example', () => {

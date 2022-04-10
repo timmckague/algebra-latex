@@ -59,7 +59,7 @@ export const letters = [
   },
   {
     name: 'pi',
-    symbol: 'π',
+    symbol: 'pi',
   },
   {
     name: 'rho',
@@ -104,7 +104,7 @@ export function isUpperCase(x) {
 }
 
 export function getSymbol(name) {
-  let symbol = letters.find(x => x.name === name.toLowerCase())
+  let symbol = letters.find((x) => x.name === name.toLowerCase())
   if (typeof symbol === 'undefined') return null
   symbol = symbol.symbol
   if (isUpperCase(name)) symbol = toUpperCase(symbol)
@@ -112,7 +112,7 @@ export function getSymbol(name) {
 }
 
 export function getName(symbol) {
-  let name = letters.find(x => x.symbol === symbol.toLowerCase())
+  let name = letters.find((x) => x.symbol === symbol.toLowerCase())
   if (typeof name === 'undefined') return null
   name = name.name
   if (isUpperCase(symbol)) name = toUpperCase(name)
@@ -121,7 +121,7 @@ export function getName(symbol) {
 
 export function convertSymbols(math) {
   debug('Converting math symbols ' + math)
-  letters.forEach(letter => {
+  letters.forEach((letter) => {
     math = math.split(letter.symbol).join(letter.name)
     math = math.split(toUpperCase(letter.symbol)).join(toUpperCase(letter.name))
   })

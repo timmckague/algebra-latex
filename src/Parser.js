@@ -1,7 +1,5 @@
-import LexerClass from './lexers/Lexer'
-import functions from './models/functions'
-import greekLetters from './models/greek-letters'
 import { debug } from './logger'
+import functions from './models/functions'
 
 export default class ParserLatex {
   constructor(latex, Lexer, options = {}) {
@@ -294,12 +292,17 @@ export default class ParserLatex {
     debug('operator right')
     let rhs = this.operator()
 
-    return {
+    const node = {
       type: 'operator',
       operator: op.value,
       lhs,
       rhs,
     }
+
+    if (this.checkIsRightDistributive(op.value, this.current_token, rhs)) {
+      node.isRightDistributive = true
+    }
+    return node
   }
 
   operator_multiply() {
@@ -504,6 +507,24 @@ export default class ParserLatex {
     )
   }
 
+  /**
+   * Check if rhs is bracketed, if yes, keep that info to ensure a - (b + c) is different from a - b + c
+   * the rhs == operator check is to ensure the property is not applied to
+   * function like sin(x) or variables with subscript like x_{first}
+   * @param {*} operator
+   * @param {*} current_token
+   * @param {*} rhs
+   * @returns boolean
+   */
+  checkIsRightDistributive(operator, current_token, rhs) {
+    return (
+      operator === 'minus' &&
+      current_token.type == 'bracket' &&
+      !current_token.open &&
+      rhs.type === 'operator'
+    )
+  }
+
   uni_operator() {
     this.eat('operator')
     if (
@@ -520,11 +541,16 @@ export default class ParserLatex {
         }
       }
 
-      return {
+      const node = {
         type: 'uni-operator',
         operator: prefix,
         value,
       }
+
+      if (this.checkIsRightDistributive(prefix, this.current_token, value)) {
+        node.isRightDistributive = true
+      }
+      return node
     }
   }
 }
